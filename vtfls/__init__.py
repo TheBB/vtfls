@@ -26,7 +26,7 @@ class Nodes(Block):
 
     def __init__(self, blkid, lines):
         super().__init__(blkid)
-        self.npts, self.dim = check_array(lines, float, name=f'Nodes block {blkid}')
+        self.npts, self.dim = check_array(lines, float, name='Nodes block {}'.format(blkid))
 
 
 class Elements(Block):
@@ -35,7 +35,7 @@ class Elements(Block):
         super().__init__(blkid)
         props, lines = properties(lines)
         self.props = props
-        self.nelems, self.nverts = check_array(lines, int, name=f'Elements block {blkid}')
+        self.nelems, self.nverts = check_array(lines, int, name='Elements block {}'.format(blkid))
 
     @property
     def nodes_id(self):
@@ -48,8 +48,8 @@ class Results(Block):
         super().__init__(blkid)
         props, lines = properties(lines)
         self.props = props
-        self.npts, self.dim = check_array(lines, float, name=f'Results block {blkid}')
-        assert self.dim == props['dimension'], f'Result block {blkid}: Inconsistent dimension'
+        self.npts, self.dim = check_array(lines, float, name='Results block {}'.format(blkid))
+        assert self.dim == props['dimension'], 'Result block {}: Inconsistent dimension'.format(blkid)
 
     @property
     def kind(self):
@@ -57,7 +57,7 @@ class Results(Block):
             return 'nodal'
         elif 'per_element' in self.props:
             return 'element'
-        raise AssertionError(f'Result block {self.blkid}: Unknown type')
+        raise AssertionError('Result block {}: Unknown type'.format(self.blkid))
 
     @property
     def target(self):
@@ -124,7 +124,7 @@ def check_array(lines, predicate, name='Unknown location'):
         if ncols is None:
             ncols = ncoords
         else:
-            assert ncoords == ncols, f'{name}: Inconsistent dimension'
+            assert ncoords == ncols, '{}: Inconsistent dimension'.format(name)
         nrows += 1
     return nrows, ncols
 
@@ -263,40 +263,40 @@ class VTFFile:
 
     def verify(self):
         for blkid, elems in self.elements.items():
-            assert elems.nodes_id in self.nodes, f'Elements block {blkid}: Unknown nodes block {elems.nodes_id}'
+            assert elems.nodes_id in self.nodes, 'Elements block {}: Unknown nodes block {}'.format(blkid, elems.nodes_id)
 
         for blkid, results in self.results.items():
             if results.kind == 'nodal':
-                assert results.target in self.nodes, f'Results block {blkid}: Unknown nodes block {results.target}'
-                assert results.npts == self.nodes[results.target].npts, f'Results block {blkid}: Incorrect size'
+                assert results.target in self.nodes, 'Results block {}: Unknown nodes block {}'.format(blkid, results.target)
+                assert results.npts == self.nodes[results.target].npts, 'Results block {blkid}: Incorrect size'.format(blkid)
             if results.kind == 'element':
-                assert results.target in self.elements, f'Results block {blkid}: Unknown elements block {results.target}'
-                assert results.npts == self.elements[results.target].nelems, f'Results block {blkid}: Incorrect size'
+                assert results.target in self.elements, 'Results block {}: Unknown elements block {}'.format(blkid, results.target)
+                assert results.npts == self.elements[results.target].nelems, 'Results block {}: Incorrect size'.format(blkid)
 
         if self.geometry is None:
             raise AssertionError('Geometry block missing')
         for step in self.geometry.mapping.values():
             for blkid in step:
-                assert blkid in self.elements, f'Geometry block points to unknown elements block {blkid}'
+                assert blkid in self.elements, 'Geometry block points to unknown elements block {}'.format(blkid)
 
         for field in self.fields():
             name = field.__class__.__name__
             for step in field.mapping.values():
                 for blkid in step:
-                    assert blkid in self.results, f'{name} block {field.blkid}: Points to unknown results block {blkid}'
+                    assert blkid in self.results, '{} block {}: Points to unknown results block {}'.format(name, field.blkid, blkid)
 
     def summary(self):
         nsteps = max(b.maxstep for b in chain([self.geometry], self.fields()))
 
         for stepid in range(1, nsteps + 1):
-            print(f'Step {stepid}')
+            print('Step {}'.format(stepid))
 
             eblks = [self.elements[blkid] for blkid in self.geometry.mapping_at(stepid)]
             nblks = [self.nodes[eblk.nodes_id] for eblk in eblks]
             for gpart, (eblk, nblk) in enumerate(zip(eblks, nblks), start=1):
-                print(f'  Element block {gpart}')
-                print(f'    {nblk.npts} nodes')
-                print(f'    {eblk.nelems} elements')
+                print('  Element block {}'.format(gpart))
+                print('    {} nodes'.format(nblk.npts))
+                print('    {} elements'.format(eblk.nelems))
 
                 for field in self.fields():
                     # Check if this field is defined on this geometry part at this step
@@ -309,4 +309,4 @@ class VTFFile:
 
                     # Only print if found
                     if found:
-                        print(f"    {field.__class__.__name__}: '{field.name}'")
+                        print("    {}: '{}'".format(field.__class__.__name__, field.name))
