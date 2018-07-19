@@ -75,7 +75,8 @@ class Steppable(Block):
         return len(self.mapping)
 
     def mapping_at(self, stepid):
-        assert stepid >= min(self.mapping)
+        if stepid < min(self.mapping):
+            return []
         while stepid not in self.mapping:
             stepid -= 1
         return self.mapping[stepid]
