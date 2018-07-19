@@ -9,6 +9,7 @@ setup(
     description='Inspect ASCII VTF files',
     maintainer='Eivind Fonn',
     maintainer_email='eivind.fonn@sintef.no',
+    python_requires='>=3.4',
     packages=['vtfls'],
     install_requires=['click'],
     entry_points={
