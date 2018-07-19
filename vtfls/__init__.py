@@ -213,9 +213,10 @@ def blocks(f):
         'glviewvector': Vector,
     }
 
+    line = next(f)
+    assert line.startswith('*VTF-'), 'File is not a valid ASCII VTF file'
+
     for line in f:
-        if line.startswith('*VTF-'):
-            continue
         if line.startswith('*'):
             block_type, block_id = line[1:].split()
             block_type = block_type.lower()
