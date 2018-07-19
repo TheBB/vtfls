@@ -93,7 +93,7 @@ class Geometry(Steppable):
             elif line.startswith('%ELEMENTS'):
                 mapping[stepid] = []
             else:
-                mapping[stepid].append(int(line))
+                mapping[stepid].extend(int(v.strip()) for v in line.split(','))
         self.mapping = mapping
 
 
@@ -177,7 +177,7 @@ def field_properties(lines):
             stepid = int(line.split()[-1])
             mapping[stepid] = []
         elif stepping:
-            mapping[stepid].append(int(line))
+            mapping[stepid].extend(int(v.strip()) for v in line.split(','))
 
     return clean_properties(props), mapping
 
