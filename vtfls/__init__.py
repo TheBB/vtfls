@@ -306,11 +306,6 @@ class VTFFile:
                 for field in self.fields():
                     # Check if this field is defined on this geometry part at this step
                     rblks = [self.results[blkid] for blkid in field.mapping_at(stepid)]
-                    found = any(
-                        (rblk.kind == 'nodal' and self.nodes[rblk.target] in nblks) or
-                        (rblk.kind == 'element' and self.elements[rblk.target] in eblks)
-                        for rblk in rblks
-                    )
 
                     found = any(
                         (rblk.kind == 'nodal' and rblk.target == nblk.blkid) or
