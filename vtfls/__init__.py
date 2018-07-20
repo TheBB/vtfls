@@ -312,6 +312,12 @@ class VTFFile:
                         for rblk in rblks
                     )
 
+                    found = any(
+                        (rblk.kind == 'nodal' and rblk.target == nblk.blkid) or
+                        (rblk.kind == 'element' and rblk.target == eblk.blkid)
+                        for rblk in rblks
+                    )
+
                     # Only print if found
                     if found:
                         print("    {}: '{}'".format(field.__class__.__name__, field.name))
