@@ -105,7 +105,7 @@ class Field(Steppable):
 
     @property
     def name(self):
-        return self.props['name']
+        return self.props.get('name', '{{UNNAMED}}')
 
 
 class Displacement(Field):
