@@ -201,8 +201,7 @@ def properties(lines):
 
 def blocks(f):
     """Yield all blocks in a file."""
-    ignore = ['glviewstateinfo']
-
+    warnings = {'glviewstateinfo'}
     classes = {
         'internalstring': InternalString,
         'nodes': Nodes,
@@ -225,8 +224,11 @@ def blocks(f):
             block_type, block_id = line[1:].split()
             block_type = block_type.lower()
             block_id = int(block_id)
-            if block_type not in ignore:
+            if block_type in classes:
                 yield classes[block_type](block_id, lines(f))
+            elif block_type not in warnings:
+                print('WARNING: Ignoring {} block'.format(block_type))
+                warnings.add(block_type)
 
 
 class VTFFile:
