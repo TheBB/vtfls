@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from itertools import takewhile, chain
 from operator import methodcaller
 
@@ -238,9 +238,9 @@ class VTFFile:
         self.strings = {}
         self.elements = {}
         self.results = {}
-        self.displacements = {}
-        self.scalars = {}
-        self.vectors = {}
+        self.displacements = OrderedDict()
+        self.scalars = OrderedDict()
+        self.vectors = OrderedDict()
         self.geometry = None
 
         for block in blocks(f):
@@ -266,7 +266,6 @@ class VTFFile:
 
     def fields(self):
         return chain(self.displacements.values(), self.scalars.values(), self.vectors.values())
-
 
     def verify(self):
         for blkid, elems in self.elements.items():
