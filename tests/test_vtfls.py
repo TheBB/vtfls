@@ -11,6 +11,7 @@ FILES = [
     "DroppedBox.vtf",
     "Q4.vtf",
     "T3.vtf",
+    "Fine-partial.vtf",
 ]
 
 

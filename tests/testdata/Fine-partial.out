@@ -1,0 +1,92 @@
+internalstring 40001
+nodes 1
+elements 1
+nodes 2
+elements 2
+results 1
+results 2
+results 3
+results 4
+results 5
+results 6
+results 7
+results 8
+results 9
+results 10
+results 11
+results 12
+results 13
+results 14
+results 15
+results 16
+results 17
+results 18
+results 19
+results 20
+results 21
+results 22
+results 23
+results 24
+results 25
+results 26
+results 27
+glviewgeometry 1
+glviewdisplacement 10
+glviewscalar 1
+glviewscalar 2
+glviewscalar 3
+glviewscalar 10
+glviewscalar 11
+glviewscalar 12
+glviewscalar 13
+glviewscalar 14
+glviewscalar 15
+glviewscalar 16
+glviewscalar 50
+glviewscalar 51
+glviewscalar 52
+glviewscalar 53
+Step 1
+  Element block 1
+    951 nodes
+    21, 881 elements
+    Displacement: 'Solution'
+    Scalar: 'fix_X'
+    Scalar: 'fix_Y'
+    Scalar: 'fix_Z'
+    Scalar: 'u_x'
+    Scalar: 'u_y'
+    Scalar: 'u_z'
+    Scalar: 'displacement'
+    Scalar: 'Bottom von Mises stress'
+    Scalar: 'Top von Mises stress'
+    Scalar: 'Pressure'
+    Scalar: 'acceleration_x'
+    Scalar: 'acceleration_y'
+    Scalar: 'acceleration_z'
+    Scalar: 'acceleration'
+  Element block 2
+    24 nodes
+    3 elements
+Step 2
+  Element block 1
+    951 nodes
+    21, 881 elements
+    Displacement: 'Solution'
+    Scalar: 'fix_X'
+    Scalar: 'fix_Y'
+    Scalar: 'fix_Z'
+    Scalar: 'u_x'
+    Scalar: 'u_y'
+    Scalar: 'u_z'
+    Scalar: 'displacement'
+    Scalar: 'Bottom von Mises stress'
+    Scalar: 'Top von Mises stress'
+    Scalar: 'Pressure'
+    Scalar: 'acceleration_x'
+    Scalar: 'acceleration_y'
+    Scalar: 'acceleration_z'
+    Scalar: 'acceleration'
+  Element block 2
+    24 nodes
+    3 elements

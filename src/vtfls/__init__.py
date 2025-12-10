@@ -1,14 +1,49 @@
 from __future__ import annotations
 
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from collections.abc import Callable, Iterator
 from itertools import chain
 from typing import Any, TextIO
 
 type Props = dict[str, int | str | None]
-type Lines = Iterator[str]
 type StepMap = dict[int, list[int]]
 type BlockConstructor = Callable[[int, Lines], Block]
+
+ELTYPES: set[str] = {
+    "POINTS",
+    "BEAMS",
+    "QUADS",
+    "TRIANGLES",
+    "HEXAHEDRONS",
+    "TETRAHEDRONS",
+    "PENTAHEDRONS",
+}
+
+
+class Lines:
+    f: TextIO
+    queue: deque[str]
+
+    def __init__(self, f: TextIO) -> None:
+        self.f = f
+        self.queue = deque()
+
+    def __iter__(self) -> Iterator[str]:
+        return self
+
+    def until_empty(self) -> Iterator[str]:
+        for line in self:
+            line = line.strip()
+            if not line:
+                break
+            yield line
+
+    def __next__(self) -> str:
+        while True:
+            return self.queue.pop() if self.queue else next(self.f)
+
+    def put_back(self, line: str) -> None:
+        self.queue.append(line)
 
 
 class Block:
@@ -24,7 +59,7 @@ class InternalString(Block):
     def __init__(self, blkid: int, lines: Lines) -> None:
         super().__init__(blkid)
         self.value = ""
-        for line in lines:
+        for line in lines.until_empty():
             self.value += line + "\n"
 
 
@@ -36,14 +71,25 @@ class Nodes(Block):
 
 class Elements(Block):
     props: Props
-    nelems: int
-    nverts: int
+    nelems: list[int]
+    nverts: list[int]
 
     def __init__(self, blkid: int, lines: Lines) -> None:
         super().__init__(blkid)
-        props, lines = properties(lines)
-        self.props = props
-        self.nelems, self.nverts = check_array(lines, int, name=f"Elements block {blkid}")
+        self.props = properties(lines, skip_on=ELTYPES)
+        self.nelems = []
+        self.nverts = []
+
+        while True:
+            line = next(lines)
+            elemtype = line.removeprefix("%").strip().upper()
+            if elemtype in ELTYPES:
+                nelems, nverts = check_array(lines, int, name=f"Elements block {blkid}")
+                self.nelems.append(nelems)
+                self.nverts.append(nverts)
+            else:
+                lines.put_back(line)
+                break
 
     @property
     def nodes_id(self) -> int:
@@ -55,10 +101,9 @@ class Elements(Block):
 class Results(Block):
     def __init__(self, blkid: int, lines: Lines):
         super().__init__(blkid)
-        props, lines = properties(lines)
-        self.props = props
+        self.props = properties(lines)
         self.npts, self.dim = check_array(lines, float, name=f"Results block {blkid}")
-        assert self.dim == props["dimension"], f"Result block {blkid}: Inconsistent dimension"
+        assert self.dim == self.props["dimension"], f"Result block {blkid}: Inconsistent dimension"
 
     @property
     def kind(self) -> str:
@@ -99,7 +144,7 @@ class Geometry(Steppable):
         super().__init__(blkid)
         stepid: int | None = None
         mapping: StepMap = {}
-        for line in lines:
+        for line in lines.until_empty():
             if line.startswith("%STEP"):
                 stepid = int(line.split()[-1])
             elif line.startswith("%ELEMENTS"):
@@ -144,7 +189,10 @@ def check_array(
 ) -> tuple[int, int]:
     nrows = 0
     ncols: int | None = None
-    for line in lines:
+    for line in lines.until_empty():
+        if line.startswith("%"):
+            lines.put_back(line)
+            break
         ncoords = len([predicate(v) for v in line.split()])
         if ncols is None:
             ncols = ncoords
@@ -153,16 +201,6 @@ def check_array(
         nrows += 1
     assert ncols is not None
     return nrows, ncols
-
-
-def lines(f: TextIO) -> Lines:
-    """Yield all lines in a single block."""
-    for line in f:
-        line = line.strip()
-        if line:
-            yield line
-        else:
-            break
 
 
 def clean_properties(props: Props) -> Props:
@@ -191,7 +229,7 @@ def field_properties(lines: Lines) -> tuple[Props, StepMap]:
     mapping: StepMap = {}
     stepping = False
 
-    for line in lines:
+    for line in lines.until_empty():
         if line.startswith("%STEP"):
             stepping = True
 
@@ -212,22 +250,27 @@ def field_properties(lines: Lines) -> tuple[Props, StepMap]:
     return clean_properties(props), mapping
 
 
-def properties(lines: Lines) -> tuple[Props, Lines]:
+def properties(lines: Lines, skip_on: set[str] | None = None) -> Props:
     """Split a block into properties and contents."""
     props: Props = {}
-    cont: list[str] = []
+
     for line in lines:
         if line.startswith("%"):
+            if skip_on and line.removeprefix("%").strip().upper() in skip_on:
+                lines.put_back(line)
+                return clean_properties(props)
+
             try:
                 name, value = line[1:].split(maxsplit=1)
                 props[name.lower()] = value
             except ValueError:
                 props[line[1:].lower()] = None
+
         else:
-            cont = [line]
+            lines.put_back(line)
             break
 
-    return clean_properties(props), chain(cont, lines)
+    return clean_properties(props)
 
 
 def blocks(f: TextIO) -> Iterator[Block]:
@@ -250,14 +293,15 @@ def blocks(f: TextIO) -> Iterator[Block]:
     except UnicodeDecodeError:
         raise AssertionError("File is not a valid ASCII VTF file")
 
-    for line in f:
+    lines = Lines(f)
+    for line in lines:
         if line.startswith("*"):
             block_type, block_id_str = line[1:].split()
             block_type = block_type.lower()
             block_id = int(block_id_str)
             if block_type in classes:
                 print(block_type, block_id)
-                yield classes[block_type](block_id, lines(f))
+                yield classes[block_type](block_id, lines)
             elif block_type not in warnings:
                 print(f"WARNING: Ignoring {block_type} block")
                 warnings.add(block_type)
@@ -325,7 +369,7 @@ class VTFFile:
                 assert results.target in self.elements, (
                     f"Results block {blkid}: Unknown elements block {results.target}"
                 )
-                assert results.npts == self.elements[results.target].nelems, (
+                assert results.npts == sum(self.elements[results.target].nelems), (
                     f"Results block {blkid}: Incorrect size"
                 )
 
@@ -353,9 +397,10 @@ class VTFFile:
             eblks = [self.elements[blkid] for blkid in self.geometry.mapping_at(stepid)]
             nblks = [self.nodes[eblk.nodes_id] for eblk in eblks]
             for gpart, (eblk, nblk) in enumerate(zip(eblks, nblks), start=1):
+                nelems = ", ".join(str(n) for n in eblk.nelems)
                 print(f"  Element block {gpart}")
                 print(f"    {nblk.npts} nodes")
-                print(f"    {eblk.nelems} elements")
+                print(f"    {nelems} elements")
 
                 for field in self.fields():
                     # Check if this field is defined on this geometry part at this step
