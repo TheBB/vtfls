@@ -300,7 +300,6 @@ def blocks(f: TextIO) -> Iterator[Block]:
             block_type = block_type.lower()
             block_id = int(block_id_str)
             if block_type in classes:
-                print(block_type, block_id)
                 yield classes[block_type](block_id, lines)
             elif block_type not in warnings:
                 print(f"WARNING: Ignoring {block_type} block")
