@@ -3,11 +3,11 @@ from __future__ import annotations
 from collections import OrderedDict, deque
 from collections.abc import Callable, Iterator
 from itertools import chain
-from typing import Any, TextIO
+from typing import Any, TextIO, TypeAlias
 
-type Props = dict[str, int | str | None]
-type StepMap = dict[int, list[int]]
-type BlockConstructor = Callable[[int, Lines], Block]
+Props: TypeAlias = dict[str, int | str | None]
+StepMap: TypeAlias = dict[int, list[int]]
+BlockConstructor: TypeAlias = Callable[[int, "Lines"], "Block"]
 
 ELTYPES: set[str] = {
     "POINTS",
